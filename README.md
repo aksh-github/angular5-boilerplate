@@ -1,6 +1,6 @@
 # angular5-boilerplate
 
-This is angular5 boilerplate to start any professional project. It contain most widely used libraries like Bootstrap, Lodash and also features like lazy loading etc.
+This is angular5 boilerplate is perfect to start any professional project. It contain most widely used libraries like Bootstrap, Lodash and also features like lazy loading etc.
 
 Once you clone this repo, first run npm install to install all the dependencies.
 
