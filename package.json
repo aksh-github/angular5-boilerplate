@@ -1,0 +1,26 @@
+{
+  "name": "angular5-boilerplate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.18.1",
+    "socket.io": "^4.5.1",
+    "uuid": "^8.3.2",
+    "crypto-js": "^4.1.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aksh-github/angular5-boilerplate.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aksh-github/angular5-boilerplate/issues"
+  },
+  "homepage": "https://github.com/aksh-github/angular5-boilerplate#readme"
+}
