@@ -13,7 +13,7 @@ const httpServer = createServer(app);
 // Static Middleware
 // app.use(".", express.static(__dirname));
 app.use(express.static(__dirname));
-app.use(cors())
+// app.use(cors())
 
 app.get("/", function (req, res, next) {
   console.log("came here", process.env.NODE_ENV);
@@ -58,15 +58,8 @@ const io = new Server(httpServer, {
   cors: {
 //    origin: /\.chattalk.netlify.app$/,
 	origin: "*",
-handlePreflightRequest: (req, res) => {
-
-  res.writeHead(200, {
-
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET,POST",
-    });
-    res.end()
-  }},
+  methods: ["GET", "POST"]
+},
 });
 
 io.on("connection", (socket) => {
