@@ -130,6 +130,6 @@ io.engine.generateId = (req) => {
   return uuid.v4(); // must be unique across all Socket.IO servers
 };
 
-httpServer.listen(7000, () => {
-  console.log("server running on: ", process.env.hostname || "localhost", 7000);
+httpServer.listen(process.env.PORT || 7000, () => {
+  console.log("server running on: ", process.env.hostname || "localhost", process.env.PORT || 7000);
 });
