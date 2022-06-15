@@ -4,6 +4,7 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const CryptoJS = require("crypto-js");
 const path = require("path");
+const cors = require("cors");
 
 const app = express();
 
@@ -12,6 +13,7 @@ const httpServer = createServer(app);
 // Static Middleware
 // app.use(".", express.static(__dirname));
 app.use(express.static(__dirname));
+app.use(cors())
 
 app.get("/", function (req, res, next) {
   console.log("came here", process.env.NODE_ENV);
@@ -54,8 +56,17 @@ function generateKey() {
 const io = new Server(httpServer, {
   /* options */
   cors: {
-    origin: /\.chattalk.netlify.app$/
-  },
+//    origin: /\.chattalk.netlify.app$/,
+	origin: "*",
+handlePreflightRequest: (req, res) => {
+
+  res.writeHead(200, {
+
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET,POST",
+    });
+    res.end()
+  }},
 });
 
 io.on("connection", (socket) => {
