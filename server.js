@@ -54,7 +54,7 @@ function generateKey() {
 const io = new Server(httpServer, {
   /* options */
   cors: {
-    origin: "*",
+    origin: "http://localhost:3000"
   },
 });
 
