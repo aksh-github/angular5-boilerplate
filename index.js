@@ -1,29 +1,11 @@
 
 
-const express = require("express");
+//const express = require("express");
 const server = require("http").createServer();
 const io = require("socket.io")(server, {
   cors: {
     origin: "*",
   },
-});
-
-const app = express();
-
-app.use(express.static(__dirname));
-// app.use(cors())
-
-app.get("/", function (req, res, next) {
-  console.log("came here", process.env.NODE_ENV);
-
-  if (process.env.NODE_ENV=="production") {
-    res.sendFile(path.join(__dirname, "web", "index.html"), (err) => {
-      console.log("Error in accessing static resources");
-      res.end(err?.message);
-    });
-  } else {
-    res.send("dev mode only");
-  }
 });
 
 const PORT = 4000;

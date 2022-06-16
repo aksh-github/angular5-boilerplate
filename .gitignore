@@ -3,3 +3,5 @@ dist
 *.pem
 
 .env
+# Local Netlify folder
+.netlify
