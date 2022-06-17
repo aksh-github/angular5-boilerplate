@@ -55,7 +55,8 @@ function generateKey() {
 const io = new Server(httpServer, {
   /* options */
   cors: {
-    origin: "*",
+    // origin: "*", //only for localhost
+    origin: /\.chattalk.netlify.app$/,
   },
 });
 
