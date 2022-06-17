@@ -1,36 +1,35 @@
-
-const express = require("express");
+// const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const CryptoJS = require("crypto-js");
 const path = require("path");
-const cors = require("cors");
 
-const app = express();
+// const app = express();
 
-const httpServer = createServer(app);
+const httpServer = createServer();
 
 // Static Middleware
 // app.use(".", express.static(__dirname));
-app.use(express.static(__dirname));
-// app.use(cors())
+// Not reqd for current Heroku Netlify setup
+// app.use(express.static(__dirname));
 
-app.get("/", function (req, res, next) {
-  console.log("came here", process.env.NODE_ENV);
+// app.get("/", function (req, res, next) {
+//   console.log("came here");
 
-  if (process.env.NODE_ENV=="production") {
-    res.sendFile(path.join(__dirname, "web", "index.html"), (err) => {
-      console.log("Error in accessing static resources");
-      res.end(err?.message);
-    });
-  } else {
-    res.send("dev mode only");
-  }
-});
+//   if (process.env.NODE_ENV) {
+//     res.sendFile(path.join(__dirname, "/index.html"), (err) => {
+//       console.log("Error in accessing static resources");
+//       res.end(err.message);
+//     });
+//   } else {
+//     res.send("dev mode only");
+//   }
+// });
 
 const uuid = require("uuid");
 
 const users = {};
+const rooms = {};
 
 const Securitykey = generateKey();
 
@@ -56,21 +55,26 @@ function generateKey() {
 const io = new Server(httpServer, {
   /* options */
   cors: {
-//    origin: /\.chattalk.netlify.app$/,
-	origin: "*",
-  methods: ["GET", "POST"]
-},
+    origin: "*",
+  },
 });
 
 io.on("connection", (socket) => {
   console.log(socket.id);
 
-  const { user } = socket.handshake.query;
+  const { user, room } = socket.handshake.query;
 
   // users[socket.id] = {};
+  // add user to users obj
   users[user] = {
     id: socket.id,
   };
+
+  // add room to rooms obj
+  rooms[room] = {};
+
+  // join to room
+  socket.join(room);
 
   // const encryptedText = encryptText(JSON.stringify(data));
 
@@ -78,8 +82,6 @@ io.on("connection", (socket) => {
   io.to(socket.id).emit("_", {
     publicKey: Securitykey,
   });
-
-  // 3516b3932a0cc967632a8ef9816d137664b26f349cd89c4300b4049dc84cfeb6
 
   socket.on("_", (data) => {
     console.log("_");
@@ -106,11 +108,12 @@ io.on("connection", (socket) => {
       return;
     }
 
-    if (!data.to || !users[data.to]) {
-      console.log("Error: Recipient unavailable");
-      console.log("===========================");
-      return;
-    }
+    // for room comment foll
+    // if (!data.to || !users[data.to]) {
+    //   console.log("Error: Recipient unavailable");
+    //   console.log("===========================");
+    //   return;
+    // }
 
     // console.log(data);
 
@@ -120,7 +123,14 @@ io.on("connection", (socket) => {
     //   Buffer.from(encryptedText).toString("base64")
     // );
 
-    io.to(users[data.to].id).emit("new_message", encryptedText);
+    // personal chat
+    // io.to(users[data.to].id).emit("new_message", encryptedText);
+
+    console.log(rooms, data.toRoom, rooms[data.toRoom]);
+
+    // room chat
+    // io.to(data.toRoom).emit("new_message", encryptedText);
+    socket.broadcast.to(data.toRoom).emit("new_message", encryptedText);
   });
 
   socket.on("disconnect", (d) => {
@@ -134,6 +144,8 @@ io.engine.generateId = (req) => {
   return uuid.v4(); // must be unique across all Socket.IO servers
 };
 
-httpServer.listen(process.env.PORT || 7000, () => {
-  console.log("server running on: ", process.env.hostname || "localhost", process.env.PORT || 7000);
+const port = process.env.PORT || 7000;
+
+httpServer.listen(port, () => {
+  console.log("server running on: ", process.env.hostname || "localhost", port);
 });
