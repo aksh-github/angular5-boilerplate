@@ -56,7 +56,7 @@ const io = new Server(httpServer, {
   /* options */
   cors: {
     // origin: "*", //only for localhost
-    origin: /\.chattalk.netlify.app$/,
+    origin: /chattalk.netlify.app$/,
   },
 });
 
