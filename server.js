@@ -54,6 +54,7 @@ function generateKey() {
 
 const io = new Server(httpServer, {
   /* options */
+  maxHttpBufferSize: 1e8,
   cors: {
     // origin: "*", //only for localhost
     origin: /chattalk.netlify.app$/,
@@ -132,6 +133,48 @@ io.on("connection", (socket) => {
     // room chat
     // io.to(data.toRoom).emit("new_message", encryptedText);
     socket.broadcast.to(data.toRoom).emit("new_message", encryptedText);
+  });
+
+  socket.on("new_image", (_data) => {
+    // console.log("_data", _data);
+
+    let data = decryptText(_data);
+    // let data = _data;
+
+    // console.log(data);
+
+    try {
+      data = JSON.parse(data);
+    } catch (err) {
+      console.log("Error parsing the data");
+      console.log("===========================");
+      return;
+    }
+
+    // for room comment foll
+    // if (!data.to || !users[data.to]) {
+    //   console.log("Error: Recipient unavailable");
+    //   console.log("===========================");
+    //   return;
+    // }
+
+    // console.log(data);
+
+    const encryptedText = encryptText(JSON.stringify(data));
+    // const encryptedText = data;
+    // console.log(
+    //   "encrypted text:",
+    //   Buffer.from(encryptedText).toString("base64")
+    // );
+
+    // personal chat
+    // io.to(users[data.to].id).emit("new_message", encryptedText);
+
+    console.log(rooms, data.toRoom, rooms[data.toRoom]);
+
+    // room chat
+    // io.to(data.toRoom).emit("new_message", encryptedText);
+    socket.broadcast.to(data.toRoom).emit("new_image", encryptedText);
   });
 
   socket.on("disconnect", (d) => {
