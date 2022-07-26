@@ -137,6 +137,12 @@ io.on("connection", (socket) => {
 
   socket.on("new_image", (_data) => {
     // console.log("_data", _data);
+    
+    // for perf checking
+    const dt = new Date();
+    console.log(dt.getHours() + ":" + dt.getMinutes() + ":" + dt.getSeconds());
+
+    // for perf checking end
 
     let data = decryptText(_data);
     // let data = _data;
