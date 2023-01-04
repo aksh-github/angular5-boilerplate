@@ -44,7 +44,7 @@ function decryptText(ciphertext) {
 
 function generateKey() {
   const salt = CryptoJS.lib.WordArray.random(128 / 8);
-  const key = CryptoJS.PBKDF2("SIsThisSecureEnough11!", salt, {
+  const key = CryptoJS.PBKDF2(process.env.PASSPHRASE, salt, {
     keySize: 256 / 32,
   });
 
