@@ -3,10 +3,27 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const CryptoJS = require("crypto-js");
 const path = require("path");
+// const fetch = require("node-fetch");
 
 // const app = express();
 
-const httpServer = createServer();
+const httpServer = createServer(async (req, res) => {
+  //set the request route
+  // if (req.url === "/api" && req.method === "GET") {
+  //   fetch("https://jsonplaceholder.typicode.com/todos/1")
+  //     .then((response) => response.json())
+  //     .then((json) => {
+  //       console.log(json);
+  //       //response headers
+  //       res.writeHead(200, { "Content-Type": "application/json" });
+  //       //set the response
+  //       res.write(JSON.stringify(json));
+  //       //end the response
+  //       res.end();
+  //       return;
+  //     });
+  // }
+});
 
 // Static Middleware
 // app.use(".", express.static(__dirname));
@@ -31,7 +48,8 @@ const uuid = require("uuid");
 const users = {};
 const rooms = {};
 
-const Securitykey = generateKey();
+// const Securitykey = generateKey();
+let Securitykey = "";
 
 function encryptText(plainData) {
   return CryptoJS.AES.encrypt(plainData, Securitykey).toString();
@@ -44,12 +62,17 @@ function decryptText(ciphertext) {
 
 function generateKey() {
   const salt = CryptoJS.lib.WordArray.random(128 / 8);
-  const key = CryptoJS.PBKDF2(process.env.PASSPHRASE, salt, {
+  const key = CryptoJS.PBKDF2("SIsThisSecureEnough11!", salt, {
     keySize: 256 / 32,
   });
 
   console.log(CryptoJS.enc.Hex.stringify(key));
   return CryptoJS.enc.Hex.stringify(key);
+}
+
+function generateKey2(randomText) {
+  const hash = CryptoJS.SHA256(randomText);
+  return hash.toString(CryptoJS.enc.Base64);
 }
 
 const io = new Server(httpServer, {
@@ -66,21 +89,37 @@ io.on("connection", (socket) => {
 
   const { user, room } = socket.handshake.query;
 
+  if (!user || !room) return;
+
   // users[socket.id] = {};
   // add user to users obj
   users[user] = {
     id: socket.id,
   };
 
-  // add room to rooms obj
-  rooms[room] = {};
+  // add user to rooms obj
+  // rooms[room] = {};
+  rooms[room] = {
+    ...rooms[room],
+    [`${socket.id}`]: user,
+  };
+
+  console.log(rooms);
+
+  // braodcast to room that user is conn
+
+  socket.broadcast.to(room).emit("new_user", {newUser: user});
 
   // join to room
   socket.join(room);
 
   // const encryptedText = encryptText(JSON.stringify(data));
 
-  // send server pub key to clients
+  Securitykey = generateKey2(room);
+
+  // console.log(Securitykey);
+
+  // send room specific server pub key to clients
   io.to(socket.id).emit("_", {
     publicKey: Securitykey,
   });
@@ -128,7 +167,7 @@ io.on("connection", (socket) => {
     // personal chat
     // io.to(users[data.to].id).emit("new_message", encryptedText);
 
-    console.log(rooms, data.toRoom, rooms[data.toRoom]);
+    // console.log(rooms, data.toRoom, rooms[data.toRoom]);
 
     // room chat
     // io.to(data.toRoom).emit("new_message", encryptedText);
@@ -137,7 +176,7 @@ io.on("connection", (socket) => {
 
   socket.on("new_image", (_data) => {
     // console.log("_data", _data);
-    
+
     // for perf checking
     const dt = new Date();
     console.log(dt.getHours() + ":" + dt.getMinutes() + ":" + dt.getSeconds());
@@ -184,9 +223,34 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", (d) => {
-    console.log("user disconnected", socket.id);
+    console.log("user disconnected", socket.id, d);
     users[socket.id] = null;
     delete users[socket.id];
+
+    let iterReqdFlag = true;
+
+    for (let r in rooms) {
+      // console.log(r);
+      for (let u in rooms[r]) {
+        //all keys are actually users
+        // console.log('====')
+        // console.log(u, rooms[r][u]);
+
+        if (socket.id === u) {
+          // braodcast to room that user is disconn
+          socket.broadcast.to(r).emit("user_exit", {userExit: rooms[r][u]});
+          rooms[r][u] = null;
+          delete rooms[r][u];
+
+          iterReqdFlag = false;
+
+          return;
+        }
+      }
+
+      // disconn etc already happen
+      if (!iterReqdFlag) return;
+    }
   });
 });
 
