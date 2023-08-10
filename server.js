@@ -84,25 +84,132 @@ const io = new Server(httpServer, {
   },
 });
 
+const new_message_handler = (_data, socket) => {
+  // console.log("_data", _data);
+
+  let data = decryptText(_data);
+
+  // console.log(data);
+
+  try {
+    data = JSON.parse(data);
+  } catch (err) {
+    console.log("Error parsing the data");
+    console.log("===========================");
+    return;
+  }
+
+  // for room comment foll
+  // if (!data.to || !users[data.to]) {
+  //   console.log("Error: Recipient unavailable");
+  //   console.log("===========================");
+  //   return;
+  // }
+
+  // console.log(data);
+
+  const encryptedText = encryptText(JSON.stringify(data));
+  // console.log(
+  //   "encrypted text:",
+  //   Buffer.from(encryptedText).toString("base64")
+  // );
+
+  // personal chat
+  // io.to(users[data.to].id).emit("new_message", encryptedText);
+
+  // console.log(rooms, data.toRoom, rooms[data.toRoom]);
+
+  // room chat
+  // io.to(data.toRoom).emit("new_message", encryptedText);
+  socket.broadcast.to(data.toRoom).emit("new_message", encryptedText);
+}
+
+const new_image_handler = (_data, socket) => {
+  // console.log("_data", _data);
+
+  // for perf checking
+  // const dt = new Date();
+  // console.log(dt.getHours() + ":" + dt.getMinutes() + ":" + dt.getSeconds());
+
+  // for perf checking end
+
+  let data = decryptText(_data);
+  // let data = _data;
+
+  // console.log(data);
+
+  try {
+    data = JSON.parse(data);
+  } catch (err) {
+    console.log("Error parsing the data");
+    console.log("===========================");
+    return;
+  }
+
+  // for room comment foll
+  // if (!data.to || !users[data.to]) {
+  //   console.log("Error: Recipient unavailable");
+  //   console.log("===========================");
+  //   return;
+  // }
+
+  // console.log(data);
+
+  const encryptedText = encryptText(JSON.stringify(data));
+  // const encryptedText = data;
+  // console.log(
+  //   "encrypted text:",
+  //   Buffer.from(encryptedText).toString("base64")
+  // );
+
+  // personal chat
+  // io.to(users[data.to].id).emit("new_message", encryptedText);
+
+  console.log(rooms, data.toRoom, rooms[data.toRoom]);
+
+  // room chat
+  // io.to(data.toRoom).emit("new_message", encryptedText);
+  socket.broadcast.to(data.toRoom).emit("new_image", encryptedText);
+}
+
 io.on("connection", (socket) => {
   console.log(socket.id);
 
   const { user, room } = socket.handshake.query;
 
-  if (!user || !room) return;
+  if (!user || !room) {
+    socket?.disconnect()
+    return;
+  }
 
-  // users[socket.id] = {};
-  // add user to users obj
-  users[user] = {
-    id: socket.id,
-  };
+  // new change
 
-  // add user to rooms obj
-  // rooms[room] = {};
+  console.log('in new change')
+
+  if(socket.uuserId) {
+    console.log('existing')
+    console.log(socket.uuserId)
+  } else {
+    socket.uuserId = uuid.v4().substring(8)
+  }
+
+  let _room = rooms[`${room}`]
+  
+  if (_room && _room[`${user}`] && !socket.uuserId) {
+    console.log('already exists')
+    socket?.disconnect()
+    return;
+  }
+  
   rooms[room] = {
     ...rooms[room],
-    [`${socket.id}`]: user,
+    // [`${socket.id}`]: user,
+    // [`${socket.uuserId}`]: user
+    [`${user}`]: socket.uuserId
   };
+
+  // new change end
+
 
   console.log(rooms);
 
@@ -122,135 +229,28 @@ io.on("connection", (socket) => {
   // send room specific server pub key to clients
   io.to(socket.id).emit("_", {
     publicKey: Securitykey,
+    uuserId: socket.uuserId
   });
 
-  socket.on("_", (data) => {
-    console.log("_");
 
-    // console.log(users);
-
-    // users[data.user].publicKey = data.publicKey;
-
-    // console.log(users)
+  socket.on("new_message", (_data)=> {
+    new_message_handler(_data, socket)
   });
 
-  socket.on("new_message", (_data) => {
-    // console.log("_data", _data);
-
-    let data = decryptText(_data);
-
-    // console.log(data);
-
-    try {
-      data = JSON.parse(data);
-    } catch (err) {
-      console.log("Error parsing the data");
-      console.log("===========================");
-      return;
-    }
-
-    // for room comment foll
-    // if (!data.to || !users[data.to]) {
-    //   console.log("Error: Recipient unavailable");
-    //   console.log("===========================");
-    //   return;
-    // }
-
-    // console.log(data);
-
-    const encryptedText = encryptText(JSON.stringify(data));
-    // console.log(
-    //   "encrypted text:",
-    //   Buffer.from(encryptedText).toString("base64")
-    // );
-
-    // personal chat
-    // io.to(users[data.to].id).emit("new_message", encryptedText);
-
-    // console.log(rooms, data.toRoom, rooms[data.toRoom]);
-
-    // room chat
-    // io.to(data.toRoom).emit("new_message", encryptedText);
-    socket.broadcast.to(data.toRoom).emit("new_message", encryptedText);
-  });
-
-  socket.on("new_image", (_data) => {
-    // console.log("_data", _data);
-
-    // for perf checking
-    const dt = new Date();
-    console.log(dt.getHours() + ":" + dt.getMinutes() + ":" + dt.getSeconds());
-
-    // for perf checking end
-
-    let data = decryptText(_data);
-    // let data = _data;
-
-    // console.log(data);
-
-    try {
-      data = JSON.parse(data);
-    } catch (err) {
-      console.log("Error parsing the data");
-      console.log("===========================");
-      return;
-    }
-
-    // for room comment foll
-    // if (!data.to || !users[data.to]) {
-    //   console.log("Error: Recipient unavailable");
-    //   console.log("===========================");
-    //   return;
-    // }
-
-    // console.log(data);
-
-    const encryptedText = encryptText(JSON.stringify(data));
-    // const encryptedText = data;
-    // console.log(
-    //   "encrypted text:",
-    //   Buffer.from(encryptedText).toString("base64")
-    // );
-
-    // personal chat
-    // io.to(users[data.to].id).emit("new_message", encryptedText);
-
-    console.log(rooms, data.toRoom, rooms[data.toRoom]);
-
-    // room chat
-    // io.to(data.toRoom).emit("new_message", encryptedText);
-    socket.broadcast.to(data.toRoom).emit("new_image", encryptedText);
+  socket.on("new_image", (_data)=> {
+    new_image_handler(_data, socket)
   });
 
   socket.on("disconnect", (d) => {
-    console.log("user disconnected", socket.id, d);
-    users[socket.id] = null;
-    delete users[socket.id];
+    const { user, room } = socket.handshake.query;
+    console.log("user disconnected", user, room, d);
+  
+    const _room = rooms[`${room}`]
+    console.log(_room)
+    delete _room[`${user}`]
+    socket.broadcast.to(room).emit("user_exit", {userExit: user});
+    console.log(_room)
 
-    let iterReqdFlag = true;
-
-    for (let r in rooms) {
-      // console.log(r);
-      for (let u in rooms[r]) {
-        //all keys are actually users
-        // console.log('====')
-        // console.log(u, rooms[r][u]);
-
-        if (socket.id === u) {
-          // braodcast to room that user is disconn
-          socket.broadcast.to(r).emit("user_exit", {userExit: rooms[r][u]});
-          rooms[r][u] = null;
-          delete rooms[r][u];
-
-          iterReqdFlag = false;
-
-          return;
-        }
-      }
-
-      // disconn etc already happen
-      if (!iterReqdFlag) return;
-    }
   });
 });
 
@@ -258,7 +258,7 @@ io.engine.generateId = (req) => {
   return uuid.v4(); // must be unique across all Socket.IO servers
 };
 
-const port = process.env.PORT || 7000;
+const port = process.env.PORT || 3030;
 
 httpServer.listen(port, () => {
   console.log("server running on: ", process.env.hostname || "localhost", port);
